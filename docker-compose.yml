@@ -133,7 +133,7 @@ services:
     ports:
       - "3000:80"
     environment:
-      - REACT_APP_API_URL=http://localhost:8080
+      - REACT_APP_API_URL=
 
   # API Gateway (NGINX Local Simulator)
   gateway:

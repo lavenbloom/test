@@ -1,19 +1,29 @@
-import React from 'react'
+import React from 'react';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import Login from './pages/Login';
+import Register from './pages/Register';
+import Dashboard from './pages/Dashboard';
 
-// Env var injection helper
-const apiUrl = (window as any).__env__?.REACT_APP_API_URL || import.meta.env.VITE_API_URL || 'http://localhost:8080';
+function PrivateRoute({ children }: { children: React.ReactNode }) {
+  const token = localStorage.getItem('token');
+  return token ? <>{children}</> : <Navigate to="/login" />;
+}
 
 function App() {
   return (
-    <div style={{ fontFamily: 'Inter, sans-serif', padding: '2rem', background: '#1a1a1a', color: '#fff', minHeight: '100vh' }}>
-      <h1>Habit Intelligence Platform</h1>
-      <p>API Gateway URL: {apiUrl}</p>
-      <div style={{ marginTop: '2rem' }}>
-        <p>Frontend scaffolding complete.</p>
-        <p>The habit grid, metrics charts, and journal features will be built out here.</p>
-      </div>
-    </div>
-  )
+    <BrowserRouter>
+      <Routes>
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+        <Route path="/dashboard" element={
+          <PrivateRoute>
+            <Dashboard />
+          </PrivateRoute>
+        } />
+        <Route path="*" element={<Navigate to="/dashboard" />} />
+      </Routes>
+    </BrowserRouter>
+  );
 }
 
-export default App
+export default App;
