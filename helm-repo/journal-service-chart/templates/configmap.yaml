@@ -1,6 +1,0 @@
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: {{ .Release.Name }}-journal-service-config
-data:
-  POSTGRES_URI: "postgresql://user:password@journal-service-db-0.journal-service-db-svc.default.svc.cluster.local:5432/journal_db"

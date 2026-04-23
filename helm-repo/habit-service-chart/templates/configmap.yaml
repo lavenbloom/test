@@ -1,6 +1,0 @@
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: {{ .Release.Name }}-habit-service-config
-data:
-  POSTGRES_URI: "postgresql://user:password@habit-service-db-0.habit-service-db-svc.default.svc.cluster.local:5432/habit_db"

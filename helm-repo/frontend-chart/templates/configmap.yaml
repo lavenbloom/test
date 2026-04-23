@@ -1,6 +1,0 @@
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: {{ .Release.Name }}-frontend-config
-data:
-  REACT_APP_API_URL: "http://gateway.example.com"
