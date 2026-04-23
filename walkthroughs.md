@@ -1,6 +1,6 @@
-# Habit Intelligence Platform - Walkthrough
+# Lavenbloom - Walkthrough
 
-The Habit Intelligence Platform has been successfully scaffolded according to your strict architectural requirements. All the files have been created in `c:/Users/alina_2pzmzug/OneDrive/Desktop/PROJECT`.
+The Lavenbloom platform has been successfully scaffolded according to your strict architectural requirements. All the files have been created in `c:/Users/alina_2pzmzug/OneDrive/Desktop/PROJECT`.
 
 ## Summary of Completed Work
 

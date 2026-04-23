@@ -18,7 +18,7 @@ export default function Dashboard() {
       <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '3rem' }}>
         <h1 style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', fontSize: '1.75rem', fontWeight: 600 }}>
           <Activity color="var(--accent-color)" size={32} />
-          Intelligence Platform
+          Lavenbloom
         </h1>
         <button onClick={handleLogout} className="btn btn-outline" style={{ padding: '0.5rem 1rem' }}>
           <LogOut size={18} /> Logout
