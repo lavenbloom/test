@@ -1,0 +1,156 @@
+version: '3.8'
+
+services:
+  # Databases
+  auth-db:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: auth_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - auth-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user -d auth_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  habit-db:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: habit_db
+    ports:
+      - "5433:5432"
+    volumes:
+      - habit-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user -d habit_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  journal-db:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: journal_db
+    ports:
+      - "5434:5432"
+    volumes:
+      - journal-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user -d journal_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  notification-db:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: notification_db
+    ports:
+      - "5435:5432"
+    volumes:
+      - notification-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user -d notification_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+
+  # Backend Services
+  auth-service:
+    build:
+      context: ./auth-service
+    ports:
+      - "8001:8000"
+    environment:
+      - POSTGRES_URI=postgresql://user:password@auth-db:5432/auth_db
+      - JWT_SECRET=supersecretjwtkey
+    depends_on:
+      auth-db:
+        condition: service_healthy
+
+  habit-service:
+    build:
+      context: ./habit-service
+    ports:
+      - "8002:8000"
+    environment:
+      - POSTGRES_URI=postgresql://user:password@habit-db:5432/habit_db
+      - JWT_SECRET=supersecretjwtkey
+      - REDIS_URI=redis://redis:6379/0
+    depends_on:
+      habit-db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+
+  journal-service:
+    build:
+      context: ./journal-service
+    ports:
+      - "8003:8000"
+    environment:
+      - POSTGRES_URI=postgresql://user:password@journal-db:5432/journal_db
+      - JWT_SECRET=supersecretjwtkey
+    depends_on:
+      journal-db:
+        condition: service_healthy
+
+  notification-service:
+    build:
+      context: ./notification-service
+    ports:
+      - "8004:8000"
+    environment:
+      - POSTGRES_URI=postgresql://user:password@notification-db:5432/notification_db
+      - REDIS_URI=redis://redis:6379/0
+      - JWT_SECRET=supersecretjwtkey
+    depends_on:
+      notification-db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+
+  # Frontend
+  frontend:
+    build:
+      context: ./frontend
+    ports:
+      - "3000:80"
+    environment:
+      - REACT_APP_API_URL=http://localhost:8080
+
+  # API Gateway (NGINX Local Simulator)
+  gateway:
+    image: nginx:alpine
+    volumes:
+      - ./nginx-gateway/nginx.conf:/etc/nginx/nginx.conf:ro
+    ports:
+      - "8080:80"
+    depends_on:
+      - auth-service
+      - habit-service
+      - journal-service
+      - notification-service
+      - frontend
+
+volumes:
+  auth-data:
+  habit-data:
+  journal-data:
+  notification-data:

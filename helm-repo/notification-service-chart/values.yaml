@@ -1,0 +1,8 @@
+replicaCount: 1
+image:
+  repository: myrepo/notification-service
+  pullPolicy: IfNotPresent
+  tag: "latest"
+service:
+  type: ClusterIP
+  port: 8000

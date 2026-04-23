@@ -1,0 +1,6 @@
+apiVersion: v2
+name: journal-service
+description: Helm chart for journal-service
+type: application
+version: 0.1.0
+appVersion: "1.0.0"

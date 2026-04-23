@@ -1,0 +1,24 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-journal-service
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: journal-service
+  template:
+    metadata:
+      labels:
+        app: journal-service
+    spec:
+      containers:
+        - name: journal-service
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          ports:
+            - containerPort: 8000
+          envFrom:
+            - configMapRef:
+                name: {{ .Release.Name }}-journal-service-config
+            - secretRef:
+                name: {{ .Release.Name }}-journal-service-secret
