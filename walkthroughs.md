@@ -6,7 +6,7 @@ The Lavenbloom platform has been successfully scaffolded according to your stric
 
 ### 1. Infrastructure Foundation
 - **Docker Compose**: Created `docker-compose.yml` defining all microservices along with 4 PostgreSQL databases and 1 Redis instance.
-- **API Gateway Simulator**: Configured an `nginx-gateway` with `nginx.conf` that acts as the entry point (`localhost:8080`) routing traffic to `/auth`, `/habit`, `/journal`, `/notify`, and `/`.
+- **API Gateway Simulator**: Configured an `nginx-gateway` with `nginx.conf` that acts as the entry point (`<EC2-Instance-IP>:8080`) routing traffic to `/auth`, `/habit`, `/journal`, `/notify`, and `/`.
 
 ### 2. Microservices (FastAPI)
 All four backend microservices have been fully implemented with:
@@ -38,10 +38,10 @@ All four backend microservices have been fully implemented with:
    ```
 
 2. **Accessing the platform**:
-   - **Frontend UI**: `http://localhost:8080/`
-   - **Auth API Docs**: `http://localhost:8080/auth/docs`
-   - **Habit API Docs**: `http://localhost:8080/habit/docs`
-   - **Journal API Docs**: `http://localhost:8080/journal/docs`
+   - **Frontend UI**: `http://<EC2-Instance-IP>:8080/`
+   - **Auth API Docs**: `http://<EC2-Instance-IP>:8080/auth/docs`
+   - **Habit API Docs**: `http://<EC2-Instance-IP>:8080/habit/docs`
+   - **Journal API Docs**: `http://<EC2-Instance-IP>:8080/journal/docs`
 
 > [!NOTE]
 > For deploying to Kubernetes with ArgoCD, the Helm charts inside the `helm-repo` directory are ready. You will simply need to apply your cluster's ingress controller / Gateway API configurations.

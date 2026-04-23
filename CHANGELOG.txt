@@ -1,0 +1,112 @@
+=============================================================
+LAVENBLOOM - DEVELOPMENT CHANGELOG & ACTION LOG
+=============================================================
+
+This file maintains a record of all changes, commands run, troubleshooting steps, errors, and fixes applied by the AI throughout the development of the Lavenbloom microservices platform.
+
+-------------------------------------------------------------
+PHASE 1: INFRASTRUCTURE FOUNDATION
+-------------------------------------------------------------
+[STEPS TAKEN]
+- Executed `mkdir auth-service habit-service journal-service notification-service frontend nginx-gateway helm-repo` to scaffold project directories.
+- Created `docker-compose.yml` to define 11 containers: 4 PostgreSQL DBs, 1 Redis instance, 4 FastAPI backends, 1 React frontend, and 1 NGINX gateway.
+- Configured `nginx-gateway/nginx.conf` to act as an API Gateway, routing `/auth`, `/habit`, `/journal`, `/notify`, and `/` traffic to respective containers.
+
+-------------------------------------------------------------
+PHASE 2: BACKEND MICROSERVICES
+-------------------------------------------------------------
+[STEPS TAKEN]
+- Auth Service: Implemented `FastAPI` app with `SQLAlchemy` models (`User`), Pydantic schemas, and JWT encoding/decoding using `passlib[bcrypt]` and `python-jose`. Created multi-stage `Dockerfile`.
+- Habit Service: Implemented `Habit`, `HabitLog`, and `Metric` models. Implemented API endpoints for habit creation, daily logging (checkboxes), and time-series metrics. Connected a `redis_client` to publish to the `missed_habits_queue`. Created multi-stage `Dockerfile`.
+- Journal Service: Implemented `JournalEntry` model and endpoints for creating/fetching logs. Created multi-stage `Dockerfile`.
+- Notification Service: Implemented `NotificationLog` model. Created an asynchronous worker thread in `worker.py` utilizing `redis.blpop` to continuously listen to the queue and log sent notifications to its dedicated DB. Created multi-stage `Dockerfile`.
+
+-------------------------------------------------------------
+PHASE 3: FRONTEND (REACT UI)
+-------------------------------------------------------------
+[STEPS TAKEN]
+- Attempted to run `npx create-vite` and `docker run` to scaffold Vite, but utilities were unavailable. Manually created the Vite/React TS boilerplate (`package.json`, `vite.config.ts`, `tsconfig.json`, `index.html`, `main.tsx`, `App.tsx`).
+- Implemented Runtime Environment Variable Injection using `env.sh` to generate `env-config.js` when the Docker container starts up.
+- Implemented Frontend `Dockerfile` leveraging `nginx:alpine` and copying `env.sh` to `/docker-entrypoint.d/`.
+- Developed Premium Dark Mode UI in `index.css` utilizing glassmorphism and modern aesthetics.
+- Developed `Login.tsx` and `Register.tsx` to handle JWT authentication via the Gateway.
+- Developed `Dashboard.tsx` utilizing a private route.
+- Developed `HabitGrid.tsx` with a dynamic 7-day checkbox grid hitting the Habit Service API.
+- Developed `MetricsChart.tsx` utilizing `recharts` to render a time-series line chart for weight and sleep tracking.
+- Developed `JournalLog.tsx` for tracking journal entries.
+
+-------------------------------------------------------------
+PHASE 4: KUBERNETES HELM CHARTS
+-------------------------------------------------------------
+[STEPS TAKEN]
+- Wrote and executed `python generate_helm_charts.py` to auto-generate fully structured Helm charts for all 5 services into the `helm-repo` directory.
+- Each chart includes: `Chart.yaml`, `values.yaml` (dev/prod), `deployment.yaml`, `service.yaml`, `configmap.yaml`, `secret.yaml`, and a DB `statefulset.yaml` + `pvc.yaml` (for backend services).
+- Generated `httproute.yaml` for Kubernetes Gateway API routing.
+
+-------------------------------------------------------------
+PHASE 5: TROUBLESHOOTING & FIXES
+-------------------------------------------------------------
+[ERROR 1: Remote IP Accessibility]
+- Issue: `REACT_APP_API_URL` defaulted to `http://localhost:8080`, causing requests from the EC2 instance's IP to fail because the browser resolved `localhost` to the user's laptop.
+- Fix: Modified `docker-compose.yml` to set `REACT_APP_API_URL=""` and updated `api.ts` to fallback to an empty string. This allows Axios to use relative URLs (matching the NGINX gateway origin natively).
+- Fix: Modified `nginx-gateway/nginx.conf` to use `server_name _;` instead of `localhost` to catch all external EC2 traffic.
+
+[ERROR 2: Missing Python Dependencies]
+- Issue: Pydantic `v2` `EmailStr` in Auth Service required the `email-validator` library to run.
+- Fix: Added `email-validator==2.1.0.post1` to `auth-service/requirements.txt`.
+
+[ERROR 3: Frontend TypeScript Build Failure]
+- Issue: Docker build failed on `npm run build` because `tsc` failed in strict mode due to unused variables and missing Vite types.
+  - TS6196: 'Habit' is declared but never used.
+  - TS6133: 'React' is declared but its value is never read.
+  - TS2339: Property 'env' does not exist on type 'ImportMeta'.
+- Fix: Removed unused `interface Habit` in `HabitGrid.tsx`.
+- Fix: Removed unused `import React from 'react';` in `Dashboard.tsx`.
+- Fix: Created `src/vite-env.d.ts` containing `/// <reference types="vite/client" />` to expose `import.meta.env` definitions.
+- Fix: Removed the invalid `"references": [{ "path": "./tsconfig.node.json" }]` link in `tsconfig.json` which would have caused compilation to crash.
+
+[ERROR 4: Performance N+1 API Calls]
+- Issue: `HabitGrid.tsx` sent a separate log-fetch request per habit inside a `Promise.all` `.map` loop, creating N+1 redundant queries.
+- Fix: Optimized `fetchHabits` to fetch `/habit/habits` and `/habit/habits/logs` simultaneously in one `Promise.all` and map the values in memory.
+
+-------------------------------------------------------------
+PHASE 6: REBRANDING
+-------------------------------------------------------------
+[STEPS TAKEN]
+- User requested to use the project naming convention "lavenbloom".
+- Updated `frontend/index.html` title to `<title>Lavenbloom</title>`.
+- Updated `frontend/src/pages/Dashboard.tsx` H1 title to `Lavenbloom`.
+- Updated `frontend/package.json` application name to `"name": "lavenbloom-frontend"`.
+- Updated `helm-repo/httproute.yaml` route name to `lavenbloom-route`.
+- Updated `walkthrough.md` to reflect Lavenbloom branding.
+
+-------------------------------------------------------------
+PHASE 7: MANUAL CONFIGURATION UPDATES
+-------------------------------------------------------------
+[STEPS TAKEN]
+- User manually updated `docker-compose.yml` version from `3.8` to `3.9`.
+- User manually modified `auth-service/Dockerfile` to remove the multi-stage build process (commented out the `builder` stage) and consolidate into a single stage to simplify the build.
+- User ran `git commit -am 'new'` and `git push` to deploy updates to the `main` branch.
+- Updated `walkthroughs.md` to remove old `localhost:8080` references and replaced them with `<EC2-Instance-IP>:8080` to clarify deployment.
+- Verified that all remaining `localhost` strings in the Python backend files are strictly default fallback parameters in `os.getenv()`, which are securely overridden by Docker Compose networking (`auth-db`, `redis`, etc.) and do not affect EC2 compatibility.
+
+-------------------------------------------------------------
+PHASE 8: AUTHENTICATION FIXES
+-------------------------------------------------------------
+[STEPS TAKEN]
+- User reported registration failure on the EC2 instance.
+- Diagnosed that `passlib[bcrypt]` in `auth-service` dynamically installs `bcrypt >= 4.0`, which contains breaking changes that cause `passlib`'s hashing functions to crash with an `AttributeError`.
+- Fix: Pinned `bcrypt==3.2.2` in `auth-service/requirements.txt` to restore compatibility.
+- Diagnosed that the Nginx API Gateway container had crashed because it was started while backend services were still building, leading to a host resolution error. Because the Gateway was dead, the UI fallback behavior caused it to query the frontend container on port 3000, failing all API requests.
+- Fix: Modified user's `auth-service/Dockerfile` to include `gcc python3-dev libffi-dev` alongside `libpq-dev` to ensure `bcrypt` and database drivers compile successfully from source on slim images.
+
+-------------------------------------------------------------
+PHASE 9: DOCKERFILE STANDARDIZATION
+-------------------------------------------------------------
+[STEPS TAKEN]
+- User confirmed that converting auth-service Dockerfile from multi-stage to single-stage fixed container startup.
+- Root cause of multi-stage failure: `pip install --user` in the builder stage copies packages to `/root/.local`, but the `COPY --from=builder /root/.local /root/.local` step is brittle on slim images because `uvicorn` and other binaries end up on a PATH that may not be set correctly for non-root users.
+- Fix applied to habit-service/Dockerfile: Replaced multi-stage build with identical single-stage pattern as working auth-service.
+- Fix applied to journal-service/Dockerfile: Same single-stage conversion.
+- Fix applied to notification-service/Dockerfile: Same single-stage conversion.
+- All three Dockerfiles now use: `python:3.11-slim` base, `gcc python3-dev libffi-dev libpq-dev` build deps, `pip install --no-cache-dir`, non-root `appuser`, and `uvicorn` CMD.
