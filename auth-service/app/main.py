@@ -2,6 +2,7 @@ from fastapi import FastAPI, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from app import models, schemas, auth, database
 from fastapi.security import OAuth2PasswordRequestForm
+from datetime import timedelta
 
 # Create tables
 models.Base.metadata.create_all(bind=database.engine)
