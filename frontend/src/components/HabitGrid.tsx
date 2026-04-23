@@ -2,12 +2,6 @@ import React, { useState, useEffect } from 'react';
 import api from '../utils/api';
 import { Plus } from 'lucide-react';
 
-interface Habit {
-  id: number;
-  name: string;
-  description: string;
-}
-
 export default function HabitGrid() {
   const [habits, setHabits] = useState<any[]>([]);
   const [newHabitName, setNewHabitName] = useState('');

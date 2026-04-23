@@ -1,4 +1,4 @@
-import React from 'react';
+
 import { useNavigate } from 'react-router-dom';
 import HabitGrid from '../components/HabitGrid';
 import MetricsChart from '../components/MetricsChart';
